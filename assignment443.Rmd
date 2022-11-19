@@ -1,0 +1,98 @@
+---
+title: "Assignment 1"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tseries)
+library(zoo)
+library(lubridate)
+d=read.csv("en_climate_monthly_QC_7056480_1952-2017_P1M.csv")
+d_ts=ts(d$Mean.Max.Temp...C.,start=c(1952,1),end=c(2017,8),frequency = 12)
+d_ts<-window(d_ts,start=c(1954,1),end=c(2016,12))
+plot(d_ts)
+```
+
+```{r,echo=TRUE}
+
+na_index = which(is.na(d_ts))
+
+#LVCF wont work properly since we have seasonal effect. better use last non-missing same month value
+d_ts[na_index] = sapply(na_index, function(ind) d_ts[(ind-12)])
+```
+
+```{r,echo=TRUE}
+
+train=window(d_ts,start=c(1954,1),end=c(2015,12))
+test=window(d_ts,start=c(2016,1),end=c(2016,12))
+
+smoothing_method = decompose(train,type ="additive")
+trend=smoothing_method$trend
+seasonal=smoothing_method$seasonal
+error=smoothing_method$random
+plot(smoothing_method)
+
+loess_method = stl(train, s.window = "periodic")
+plot(loess_method)
+
+
+```
+
+```{r,echo=TRUE}
+train_time=1:length(train)
+fit=lm(trend~train_time,na.action = na.omit)
+summary(fit)
+#yes since slope is significant (p value < 0.05)
+#probably. since slope is significant. 
+
+```
+
+```{r,echo=TRUE}
+test_time=1:length(test)+length(train)
+data.frame(train_time=test_time)
+forecast1=predict(fit,newdata=data.frame(train_time=test_time))+seasonal[1:12]
+
+mean((test-forecast1)^2)#MSPE
+
+#e
+#forecasting using smoothing, assuming no trend is present
+mean_tr=mean(train-seasonal)
+forecast2=mean_tr+seasonal[1:12]
+mean((test-forecast2)^2)#MSPE
+
+plot(test)
+lines(ts(forecast1, frequency = 12, start=c(2016,1),end=c(2016,12)),col="red")
+lines(ts(forecast2, frequency = 12, start=c(2016,1),end=c(2016,12)),col="blue")
+
+
+#forecast with trend seems to be better (graphs shows red is closer to black, and MSPE is smaller)
+```
+```{r,echo=TRUE}
+#2a
+d=read.csv("GSPC.csv")
+adj_daily = zoo(d$GSPC.Adjusted,as.Date(d$Date))
+plot(adj_daily)
+#no seasonal effect. upward trend. not stationary. probably some cyclic effect as there is some fast drop from time to time
+
+```
+
+```{r,echo=TRUE}
+
+#2b
+log_diff_adj_daily = diff(log(adj_daily))
+plot(log_diff_adj_daily)
+#looks stationary, as there is no obvious trend or seasonal effect.
+#but there is some extreme values
+#because stationary TS is easier to work with
+
+```
+
+
+```{r,echo=TRUE}
+
+acf(log_diff_adj_daily,na.action = na.pass)#some significant acf at low lags. 
+acf(abs(log_diff_adj_daily),na.action = na.pass)# long term acf, indicating seasonal effect
+
+```

@@ -1,0 +1,220 @@
+---
+title: "Assignment3_443"
+author: 'Lai Wei (#31739014)'
+date: "22 March, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+
+### Question 1
+(a)
+```{r,echo=TRUE}
+dat<-read.csv("rimouski.csv")
+dat<-ts(dat$Mean.Max.Temp,frequency=12,start=c(1954,1),end=c(2017,12))
+train<-window(dat,start=c(1954,1),end=c(2010,12))
+test<-window(dat,start=c(2011,1),end=c(2016,12))
+plot(train,xlab="Year",ylab="Temperature")
+acf(train,lag.max = 5*12)
+pacf(train,lag.max = 5*12)
+#comment:
+#1.there is no obvious trend in the time series plot
+#2.there is seasonal effect in time series plot.
+#3.in acf plot, we can see seasonal effect as well since there exist periodical damped curve, which is caused by seasonality.
+#4.in pacf plot, pacf has significant values at first 12 lags.
+```
+
+(b)
+```{r,echo=TRUE}
+fit<-arima(train,order=c(0,0,0),seasonal=list(order=c(0,1,0),period=12))
+fit
+#(1)model equation(s):AR(12) model
+
+#(2)give estimates for the model parameter(s):
+#based on the model equation in (i), the only parameter need to estimate is sigma and estimated sigma^2 is 6.122
+
+#(3)residual
+res<-residuals(fit)
+plot(res)
+acf(res,lag.max = 5*12)
+pacf(res,lag.max = 5*12)
+#comment:the residual time series is stationary, the acf of residual has significant value at lag 1 and lag 12, and the pacf has significant value at first 1,12,24....
+```
+
+```{r,echo=TRUE}
+# SARIMA (p,d,q)(P,D,Q)_s:\phi(B)\Phi(B)W(t)=\theta(B)\Theta(B)Z(t)
+# p=d=q=0,P=0,D=1,s=12
+# W_t=Z_t
+# W(t)=\nabla^d \nabla^D_{s}X(t)=\nabla^1_{12}X(t)=X_t-X_{t-12}
+# X_t-X_{t-12}=Z_t
+# X_t=X_{t-12}+Z_t
+# AR(12)\ model
+```
+
+
+(c)
+```{r,echo=TRUE}
+#(1)
+plot(c(1,2,3,4,5)*12,acf(res,plot=FALSE,lag.max = 5*12)$acf[c(1,2,3,4,5)*12+1],
+     xlab="lag",ylab="acf")
+#since residual acf cuts off at lat 12,and seasonality of this time series is 12, therefore,adding a seasonal MA(Q=1) component can capture this feature.
+
+#(2) model equations:ARMA(12,12) model
+
+#(3) 
+fit2<-arima(train,order=c(0,0,0),seasonal=list(order=c(0,1,1),period=12))
+fit2
+#in this ARMA(13,1) model, we need to estimate beta and sigma.
+#estimated sigma^2 is 3.4, beta is -0.9206
+
+#(4)
+#AIC in SARIMA(0,0,0)*(0,1,0) is 3126.62, AIC in SARIMA(0,0,0)*(0,1,1) is 2755.96.
+#smaller AIC is better, based on AIC, we will choose fit2,SARIMA(0,0,0)*(0,1,1).
+```
+
+```{r,echo=TRUE}
+# SARIMA (p,d,q)(P,D,Q)_s:\phi(B)\Phi(B)W(t)=\theta(B)\Theta(B)Z(t)
+# p=d=q=0, P=0, D=Q=1, s=12
+# W_t=\Theta(B)Z_t=(1+\beta B^{12})Z_t
+# W(t)=\nabla^d \nabla^D_{s}X(t)=\nabla^1_{12}X(t)=X_t-X_{t-12}
+# (1+\beta B^{12})Z_t=Z_t+\beta Z_{t-12}=X_t-X_{t-12}
+# X_t=X_{t-12}+Z_t+\beta Z_{t-12}
+# ARMA(12,12) model
+```
+(d)
+```{r,echo=TRUE}
+#(1)
+res2<-residuals(fit2)
+acf(res2)
+pacf(res2)
+#since the pacf cuts off at lag 1 and acf decay, compliant with AR(1) characteristics,therefore add a AR(p=1) component is reasonable.
+#(2) ARMA(13,12) 
+#(3)
+fit3<- arima(train,order=c(1,0,0),seasonal=list(order=c(0,1,1),period=12))
+fit3
+#estimate alpha =0.1808, estimate beta =-0.9354,estimate sigma^2 =3.281
+#(4)
+diag<-tsdiag(fit3)
+#acf are small, though some P-value are not large, overall this fitted model seems like a good fit.
+#(5)
+#smaller AIC is better, compare with previous two fitted models, AIC in fit3,SARIMA(1,0,0)*(0,1,1),is smallest.Therefore, using AIC, we have improved our model by adding Ar(p=1) component
+```
+
+```{r,echo=TRUE}
+# SARIMA (p,d,q)(P,D,Q)_s:\phi(B)\Phi(B)W(t)=\theta(B)\Theta(B)Z(t)
+# p=1, d=q=0,P=0, D=Q=1, s=12 \Theta(B)=1+\beta B^{12}, \phi(B)=1-\alpha B
+# W_t=X_t-X_{t-12}
+# (1-\alpha B)W_t=(1+\beta B^{12})Z_t
+# (1-\alpha B)(X_t-X_{t-12})=Z_t+\beta Z_{t-12}
+# X_t=\alpha X_{t-1}+X_{t-12}-\alpha X_{t-13}+Z_t+\beta Z_{t-12}
+# ARMA(13,12) model
+```
+
+(e)
+```{r,echo=TRUE}
+
+prd<-predict(fit3,n.ahead = 6*12)
+plot(test,lty=1,col=1,xlab="Year",ylab="Temperature")
+lines(prd$pred,lty=2,col=2)
+legend("bottomleft",lty=1:2,col=1:2,legend = c("test","predicted"))
+#the plot looks good,prediction are reasonable.
+#how they differ from the test data.
+#the predicted data looks like little smaller than the test data
+```
+(f)
+```{r,echo=TRUE}
+fit4<-HoltWinters(train)
+fit4
+#(1)
+#the model indicate a small trend, beta= 0.01715428
+
+#(2)
+prd2<-predict(fit4,n.ahead = 6*12)
+plot(test,lty=1,col=1,xlab="Year",ylab="Temperature")
+lines(prd$pred,lty=2,col=2)
+lines(prd2,lty=3,col=3)
+legend("bottomright",
+       lty=c(1,2,3),
+       col=c(1,2,3),
+       legend =c("test","Box-Jenkins","Holt-Winters"),
+       cex=0.7)
+#comment on the comparison between the two forecasting methods
+#compared with Holt-Winters,predicted value of Box_Jenkins is smaller 
+
+#(3)
+-mean((test-prd$pred)^2)#Box-Jenkins 
+-mean((test-prd2)^2)#Holt-Winters
+#MSPE summarizes the predictive ability of a model. Ideally, this value should be close to zero, which means that your predictor is close to the true value.Since we need to minimize MSPE, MSPE is smaller of Box-Jenkins is smaller,that is,Box-Jenkins is better.
+```
+### Question 2
+(a)
+```{r,echo=TRUE}
+d<-read.csv("bynd.txt",sep="",head=FALSE)
+d<-ts(d$V2,frequency = 1)
+plot(d,xlab="Year",ylab="Daily Close Price ($)")
+acf(d)
+pacf(d)
+#there is trend in the time series plot, but no seasonal effect
+#pacf cuts off at lag 1
+#acf decays slowly,the long-term dependence indicates trend 
+```
+(b)
+```{r,echo=TRUE}
+diff_d<-diff(d)
+acf(diff_d)
+pacf(diff_d)
+#acf:except acf=1 at lag 0,there is no significant acf,all values fall within the confidence band
+#pacf plot: there is no significant pacf,all values fall within the confidence bands
+#combining two plots, new series looks like white noise
+#it appears stationary.
+```
+(c)
+```{r,echo=TRUE}
+#a model of this form can be written as the following form. take first-difference of this model, can obtain a white noise with mean zero and constant variance,and white noise is stationary.
+#first differecing makes the share price series looks like a white noise
+#therefore,a model of this form is suitable for the share price series.
+```
+
+```{r,echo=TRUE}
+# X_t=X_{t-1}+Z_t
+# X_t-X_{t-1}=Z_t
+# \nabla^dX_t=Z_t, d=1 \nabla X_t=Z_t, Z～WN(0,\sigma ^2)
+```
+
+(d)
+```{r,echo=TRUE}
+#arima(0,1,0)
+```
+(e)
+```{r,echo=TRUE}
+fit5<-arima(d,order = c(0,1,0))
+fit5
+#estimated sigma^2 is 35.98
+```
+(f)
+```{r,echo=TRUE}
+#I would use the last term of time series,that is, x_n for the forecast at lead time l
+```
+(g)
+```{r,echo=TRUE}
+prediction<-predict(fit5,n.ahead=7)
+lwr<-prediction$pred[7]-prediction$se[7]*1.645
+upr<-prediction$pred[7]+prediction$se[7]*1.645
+lwr
+upr
+```
+The 90% prediction interval is [20.30279,72.51721]
+
+(e)
+```{r,echo=TRUE}
+#don't sell, since your stock price is going to infinity.
+```
+

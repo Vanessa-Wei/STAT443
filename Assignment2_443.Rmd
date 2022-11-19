@@ -1,0 +1,29 @@
+---
+title: 'STAT 443: Assignment 2'
+author: 'Lai Wei (#31739014)'
+date: "14 February, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+(c)
+```{r,echo=TRUE}
+
+set.seed(123)
+x<-arima.sim(n=2000,list(order=c(3,0,0),ar=c(0.4,0.25,-0.1)),sd=sqrt(1.96))
+acf(x)
+acf(x,plot=FALSE)
+
+```
+
+

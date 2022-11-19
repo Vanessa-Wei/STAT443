@@ -1,0 +1,129 @@
+---
+title: "Assignment4_443"
+author: 'Lai Wei (#31739014)'
+date: "7 April, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+(c)
+```{r,echo=TRUE}
+b1<-0.7
+b2<-0.2
+b3<- -0.1
+
+cov0<-(1+b1^2+b2^2+b3^3)*1
+cov1<-(b1+b1*b2+b2*b3)*1
+cov2<-(b2+b1*b3)*1
+cov3<-b3*1
+fw<-function(w) (1/pi) * (cov0 + 2*(cov1*cos(w)+cov2*cos(2*w)+cov3*cos(3*w)))
+  
+fwstar<-function(w)
+  fw(w)/cov0
+
+x<-seq(0,pi,length=100)
+norm_spec_density<- fwstar(x)
+
+plot(x,norm_spec_density,type = "l")
+```
+
+### Question 3 
+(a)
+```{r,echo=TRUE}
+d<-read.csv("soi.txt",sep="",head=TRUE)
+d<-ts(d$annual,frequency = 1,start = c(1866),end = c(2010))
+plot(d,xlab="Year",ylab="SOI",main="Annual SOI (1866-2010)")
+acf(d)
+#time seires plot don't have trend and seasonality, the long term change in the mean of this time seires is zero. this is a stationary time series.
+#in acf plot, except rho(0)=1, all acf value lie between the confidence band, no significant value. acf plot show no serial correlation.
+```
+(b)
+```{r,echo=TRUE}
+spec<-spec.pgram(d,log="yes",spans = sqrt(2*length(d)))
+abline(0.2,0)
+#the smoothed periodogram has largest value around frequency=0.2 ,angular frequency omega = frequency * (2*pi), and the wavelength =1/f. therefore, wavelength is 1/0.2=5 approximately and angular frequency is 0.4pi approximately. 
+```
+
+(c)
+```{r,echo=TRUE}
+
+f<-function(ts,p){
+  end<-floor((length(ts))/2)
+  w<-seq(0,end)
+  freq<-w*2*pi/length(ts)
+  return(freq[p+1])
+}
+ 
+f(d,10)
+#input: ts and p,ts represents the given time series and p represents given constant p.output:return the (p+1)th fourier frequency for a given time series and constant p.
+#the output of the function is 0.4333231, that is p=10,frequency= 0.4333231
+
+#check
+2*pi*10/145
+```
+
+(d)
+```{r,echo=TRUE}
+t<-seq(1,length(d))
+p<-seq(1, floor(length(d)/2))
+
+pvalues<-c() #create a blank vector 
+
+for (i in p){
+  w<-f(d,i)
+  t<-seq(1,length(d))
+  fit<-lm(d ~ cos(w*t) + sin(w*t)) #fit linear model for each p
+  pvalues[i]=pf(summary(fit)$fstatistic[1],summary(fit)$fstatistic[2],summary(fit)$fstatistic[3],lower.tail = FALSE) #find P-values for each model
+}
+sig<-p[pvalues<0.05] # all find P-value which <0.05, since significant level is 5% significant level
+sig_p<-pvalues[sig] #significant P-values 
+
+# all values of p that give significant Fourier frequencies at the 5% confidence level are  p=16 20 23 25 41 
+
+  #s<-summary(fit)
+  # q<-s$fstatistic[1] #Return quantile
+  # d1<-s$fstatistic[2] #Return d1,degree freedom of numerator
+  # d2<-s$fstatistic[3] #Return d2,degree freedom of denominator
+  # use pf to calculate P-value from t-statistics
+
+```
+
+(e)
+```{r,echo=TRUE}
+coeff_cos<-c() #create a blank vector for estimated coefficients of cos term
+coeff_sin<-c() #create a blank vector for estimated coefficients of sin term
+
+for(i in sig){
+  w<-f(d,i)
+  t<-seq(1,length(d))
+  fit<-lm(d ~ cos(w*t) + sin(w*t))
+  s<-summary(fit)$coefficients
+  coeff_cos[i]<-s[2,1]
+  coeff_sin[i]<-s[3,1]
+}
+coeff_cos[!is.na(coeff_cos)] #estimated coefficients of cos(wt)
+coeff_sin[!is.na(coeff_sin)] #estimated coefficients of sin(wt)
+```
+
+(g)
+```{r,echo=TRUE}
+plot(d,xlab="Year",ylab="SOI",main="Annual SOI (1866-2010)")
+lines(1866:2010,predict(fit),col="blue")
+legend("topright",legend = c("data","fitted value"),col = c("black","blue"),lty = c(1,1))
+
+```
+
+
+
+
+
+
