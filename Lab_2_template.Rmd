@@ -1,0 +1,136 @@
+---
+title: 'STAT 443: Lab2'
+author: 'Lai Wei (#31739014)'
+date: "28 January, 2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+(a) 
+
+```{r, echo=TRUE}
+datalab <- read.csv("dataTempPG.csv")
+
+data_annual <- datalab$Annual
+
+data_annual_ts <- ts(data_annual,start=1919,end=2008,frequency=1)
+
+plot(data_annual_ts,xlab="Year",ylab="Temperature",main="Annual mean temperature")
+
+#comment:
+#seasonality:Can not see obvious seasonality in Annual mean temperature.
+#trend: the trend of Annual mean temperature is upward, which means the annual mean temperature is increasing 
+#not a stationary time series
+```
+
+
+(b)
+
+```{r, echo=TRUE}
+
+acf(data_annual_ts,lag.max=35)
+acf(data_annual_ts,plot=FALSE)
+
+
+#comment:
+#1.The overall trend of autocorrelation is decaying while the lag value is going larger, we can conclude that 
+# it's stationary time series
+#2.The ACF should cut-off at lag 0 (ACF=1).
+#3.The ACF values that fall outside the horizontal dash line means 
+#  these ACF values of given lag are significantly different from zero. 
+#  while estimates within the confidence band are deemed statistically insignificant from zero.
+#4.As we can seen in the plot,several sample autocorrelation lie outside the confidence band,
+#  we can conclude that there is not enough evidence in the data for serial correlation at a given lag.
+
+```
+
+
+(c)
+
+```{r, echo=TRUE}
+
+library(zoo)
+
+dat <- window(data_annual_ts,start=1968,end=2008)
+plot(dat,main="Annual Mean Minimum Temperature at Price Gerorge(1968-2008)",xlab="Year",ylab="Temperature(Celsius)")
+
+lines(rollmean(dat,k=11),col="cyan")
+
+text.legend <- c("smoothed time series","original time series","lag=11")
+col.legend <- c("cyan","black")
+
+legend("bottomright",pch=c(NA,NA,15),lty=c(1,1,NA),legend=text.legend,
+       col=c("cyan","black","black"),
+       bg="aliceblue",cex=0.6)
+```
+
+
+### Question 2
+
+(a) 
+
+```{r, echo=TRUE}
+
+lake <- read.csv("LakeLevels.csv")
+
+lake.ts<-ts(lake$LakeLevel,start=c(2007,1),frequency = 365)
+
+acf(lake.ts,lag.max=365*5)
+
+
+#comment:
+#1.The ACF should cut-off at lag=0 (ACF=1).
+#2.The ACF oscillates as a damped sinusoidal wave curve with lag,
+#and period is 1,hence we can conclude that the time series have annual seasonality.
+#3.The ACF decay with lag, it's not a stationary time series.
+#4.Most of the ACF values fall outside the confidence band,
+#and hence we can conclude that the serial correlation is significant at given lag.
+
+```
+
+
+(b)
+
+```{r, echo=TRUE}
+
+plot(decompose(lake.ts,type="additive"),xlab="Year")
+
+lake.decom<-decompose(lake.ts,type="additive")
+trend<-lake.decom$trend
+season<-lake.decom$seasonal
+error<-lake.decom$random
+plot(trend,xlab="Year",ylab="LakeLevel(m)",main="Trend of Annual LakeLevel")
+plot(season,xlab="Year",ylab="LakeLevel(m)",main="Seasonality of Annual LakeLevel")
+plot(error,xlab="Year",ylab="LakeLevel(m)",main="Error of Annual LakeLevel")
+
+
+```
+
+
+(c)
+
+```{r, echo=TRUE}
+
+lev.stl <- stl(lake.ts, s.window="periodic")
+trend.stl <- lev.stl$time.series[,"trend"]
+seas.stl <- lev.stl$time.series[,"seasonal"]
+error.stl <- lev.stl$time.series[,"remainder"]
+
+plot(trend.stl,xlab="Year",ylab="LakeLevel",main="Trend of Annual LakeLevel")
+plot(seas.stl,xlab="Year",ylab="LakeLevel",main="Seasonality of Annual LakeLevel")
+plot(error.stl,xlab="Year",ylab="LakeLevel",main="Error of Annual LakeLevel")
+
+
+
+```
+

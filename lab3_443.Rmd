@@ -1,0 +1,157 @@
+---
+title: 'STAT 443: Lab3'
+author: 'Lai Wei (#31739014)'
+date: "03 Feb, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+(a)
+
+```{r,echo=TRUE}
+dat<-arima.sim(n=500,model=list(order=c(0,0,3),ma=c(-4.25,5.75,-1.80),sd=sqrt(0.3)))
+plot(dat)
+
+# How should the autocorrelation function behave for the process?
+# 1.the mean of this time series is unchanged in the long-term, we can conclude 
+# that this time series is stationary. 
+# 2.the seasonality is not obvious. we can this time series has zero seasonal effct.
+# 3.not all roots of the characteristic polynomial theta(B) lie outside the unit
+# circle in complex plane, that is, this ma process is not invertibal
+
+```
+
+(b)
+
+```{r,echo=TRUE}
+acf(dat)
+acf(dat,plot=FALSE)
+# comment on its behaviour. Does
+# the sample acf look like you would expect? Repeat the simulation a few times to see
+# what is happening.
+
+# 1.there are 2 siginificant non-zero lines, the rest of acf values lie inside the
+# confidence band, we can conclude that the "cuts off" after lag 2
+# 2.the acf plot shows an expoential decay after lag 2,indicating a stationary time series
+
+```
+(c)
+
+```{r,echo=TRUE}
+ARMAacf(ma=c(-4.25,5.75,-1.80),pacf = FALSE)
+
+```
+
+(d)
+```{r,echo=TRUE}
+# Explain the behaviour of the sample acf here.
+# The theoretical acf at lag 3 is only -0.03251151,likely to fall inside the confidence band, the "cuts off" probabily at lag 2.
+```
+
+
+### Question 2
+
+(a)
+```{r,echo=TRUE}
+dat2<-arima.sim(n=1000,model=list(order=c(0,0,1),ma=c(5),sd=sqrt(0.9)))
+plot(dat2)
+acf(dat2,plot=FALSE)
+acf(dat2)
+
+# comment on its behaviour.
+# 1.there are 2 significant lines outside the confidence band, rest of acf values 
+# lie inside the confidence band,"cuts off" at lag 1.
+# 2.the acf plot shows exponential decay at lag 1, indicating a stationary process.
+# 3.the mean of this time series is nearly unchanged for long-term, which shows stationary.
+```
+(b)
+```{r,echo=TRUE}
+dat3<-arima.sim(n=1000,model=list(order=c(0,0,1),ma=c(0.2),sd=sqrt(0.9)))
+plot(dat3)
+acf(dat3)
+acf(dat3,plot=FALSE)
+
+# comment on its behaviour.
+# 1.there are 2 significant lines outside the confidence band, rest of acf values 
+# lie inside the confidence band,"cuts off" at lag 1.
+# 2.the acf plot shows exponential decay at lag 1 (from0.216 to 0.009),the rest of acf
+# vlues are all around zero,the correlation is insignificant(theoretically zero), indicating a stationary process.
+# 3.the mean of this time series is nearly unchanged for long-term, which shows stationary.
+
+```
+(c)
+```{r,echo=TRUE}
+# Repeat parts (a) and (b) several times. What do you notice? Explain what is hap-
+# pening.
+
+#acf of TS from a and b looks similar to each other. This is because they have the exact same theoretical acf,because beta=5 in a and beta=1/5 in b. this ma process is invertible.
+
+```
+
+
+### Question 3
+
+(a)
+```{r,echo=TRUE}
+dat4<-arima.sim(n=1000,model=list(order=c(1,0,0),ar=c(0.3),sd=0.2))
+plot(dat4)
+acf(dat4)
+acf(dat4,plot=FALSE)
+
+# comment on its behaviour.
+# there exist 2 significant lines, one is rho(0)=1,rho(1) is significantly larger the confidence band.rho(2) is larger than confidence band,which isn't obvious.the rest of acf values are fall inside the band. that is, the "cuts off" is at lag 1, and this is a stationary time series
+
+
+```
+
+(b)
+```{r,echo=TRUE}
+# How does the acf of the process change as α →1? Explore this in R, and explain what
+# you observe.
+
+#alpha=0.4
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(0.4)), sd = 0.2))
+#alpha=0.6
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(0.6)), sd = 0.2))
+#alpha=0.8
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(0.8)), sd = 0.2))
+#alpha=0.95
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(0.9)), sd = 0.2))
+#alpha=0.99
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(0.99)), sd = 0.2))
+
+#as alpha gettting close to 1, the long term dependency becomes more obvious, 
+# the autocorrelation is more siginificant as well.The decay of acf becomes slow.
+# the stationarity is goes to non-stationary.
+```
+
+(c)
+```{r,echo=TRUE}
+# What happens to the sample acf if the parameter α changes sign? Experiment with
+# this, changing the sign of α in your simulations. Explain what is happening.
+
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.4)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.6)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.7)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.8)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.9)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.95)), sd = 0.2))
+acf(arima.sim(n=1000,list(order = c(1,0,0),ar = c(-0.99)), sd = 0.2))
+
+#as alpha gettting close to 1, and change the sign of alpha,the decay is same as
+#positive alpha, but acf oscillates (1 negative, 1 positive...)
+
+
+```
+
+

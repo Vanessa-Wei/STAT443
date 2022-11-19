@@ -1,0 +1,64 @@
+---
+title: 'STAT 443: Lab7'
+author: 'Lai Wei (#31739014)'
+date: "11 March, 2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+```{r,echo=TRUE}
+dat <-read.csv("TempPG.csv")
+annual_ts<-ts(dat$Annual)
+model1<-arima(annual_ts,order=c(1,0,0),include.mean = T)
+model1
+#fitted model: 
+```
+$$X_t+1.5951=0.5843(X_{t-1}+1.9591)+Z_t$$
+
+2.
+```{r,echo=TRUE}
+acf(annual_ts)
+#In what way does the acf not behave as you would expect for the fitted AR(1) model?
+
+#for AR(1) model, rho(h)=alpha^h, small alpha>0 ,acf decay fast with weak long-term dependence, while large alpha>0, acf decay slowly with long-term dependence. as alpha=0.5843, relatively small, acf should decay faster than the plot show (significant acf at lag 8).
+#this is probably due to the trend in the data.
+```
+3.
+```{r,echo=TRUE}
+df_annual_ts<-diff(annual_ts)
+plot(df_annual_ts)
+acf(df_annual_ts)
+pacf(df_annual_ts)
+
+#suggest MA(1) model for the differences.
+```
+4.
+```{r,echo=TRUE}
+model2<-arima(df_annual_ts,order=c(0,0,1),include.mean = F)
+model2
+#fitted model:
+```
+$$X_t=Z_t-0.7504*Z_{t-1}$$
+5.
+```{r,echo=TRUE}
+tsdiag(model2)
+#how well does the model appear to fit?
+#acf are all small,in confidence bound;p-value are all large enough, that is our modelis good.
+```
+6.
+```{r,echo=TRUE}
+AIC(model1)
+AIC(model2)
+#since second model, that is MA(1), has the smaller AIC value, so I will select MA(1) model.
+
+```

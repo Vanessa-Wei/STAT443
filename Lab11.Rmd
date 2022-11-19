@@ -1,0 +1,95 @@
+---
+title: 'STAT 443: Lab11'
+author: 'Lai Wei (#31739014)'
+date: "9 Apr, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+(a)
+```{r,echo=TRUE}
+ts<-arima.sim(list(order = c(0,0,0)),n=100,sd=2)
+spec.pgram(ts)
+spec.pgram(ts,spans=c(5))
+spec.pgram(ts,spans=c(15))
+spec.pgram(ts,spans=c(7,5))
+#comment:the theoretical spectrum should be a constant over 0,pi
+#raw periodogram has lots of variations.
+#smoothed periodogram did not capture the ture value 4 well.
+```
+(b)
+```{r,echo=TRUE}
+ts<-arima.sim(list(order = c(0,0,0)),n=1000,sd=2)
+spec.pgram(ts)
+spec.pgram(ts,spans=c(5))
+spec.pgram(ts,spans=c(15))
+spec.pgram(ts,spans=c(7,5))
+#comment:as sample size increase, raw periodogram has more variations.
+#smoothed periodograms behaves similary. this may because we use too small spans
+#but the overall mean is more consistent aound true value of the constant:4
+```
+(c)
+```{r,echo=TRUE}
+spec.pgram(ts,spans=c(58),log="no")
+spec.pgram(ts,spans=c(20,20),log="no")
+spec.pgram(ts,spans=c(20,20))
+spec.pgram(ts,spans=c(2,2),log="no")
+spec.pgram(ts,spans=c(2,20),log="no")
+spec.pgram(ts,spans=c(20,2),log="no")
+#double smoothing seems to yield better estimate.
+```
+(d)
+```{r,echo=TRUE}
+#take log makes error scale smaller.
+```
+
+### Question 2
+(a)
+```{r,echo=TRUE}
+xt<-arima.sim(list(order = c(0,0,1),ma=-0.9),n=100,sd=2)
+spec.pgram(xt)
+spec.pgram(xt,spans=c(5))
+spec.pgram(xt,spans=c(15))
+spec.pgram(xt,spans=c(7,5))
+#comment:smoothed with span=15 is the best,span=5 is undersmoothed, doublespan is oversmoothed.
+```
+(b)
+```{r,echo=TRUE}
+spec.pgram(xt,spans=c(18))
+spec.pgram(xt,spans=c(10,9))
+# try 2*sqrt(100)
+```
+(c)
+```{r,echo=TRUE}
+spec.pgram(xt)
+spec.pgram(xt,spans=c(5))
+spec.pgram(xt,spans=c(15))
+spec.pgram(xt,spans=c(7,5))
+#when sample size increase, the raw periodogram has more variations.
+#smoothed periodograms captures the true shape of spectrum.
+#but there are large variations due to small spans
+```
+(d)
+```{r,echo=TRUE}
+xt<-arima.sim(list(order = c(0,0,1),ma=-0.9),n=1000,sd=2)
+spec.pgram(xt)
+spec.pgram(xt,spans=c(63))
+spec.pgram(xt,spans=c(30,33))
+spec.pgram(xt,spans=c(10,53))
+spec.pgram(xt,spans=c(53,10))
+#try 2*sqrt(1000)
+#single span: 2*sqrt(1000)
+#double span: use sum = 2*sqrt(1000) and split them evenly
+```
+
+
+

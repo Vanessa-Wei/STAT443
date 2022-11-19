@@ -1,0 +1,76 @@
+---
+title: 'STAT 443: Lab5'
+author: 'Lai Wei (#31739014)'
+date: "14 Feb, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+(a)
+```{r,echo=TRUE}
+# Name the process defined in equation (1), specifying its order.
+# autogregressive process, order 3
+```
+
+(b)
+```{r,echo=TRUE}
+# Explain how to recognize this process based on an observed time series and how to deter-
+# mine its order.
+# the model satisfies AR(p) process form, X_{t-3} shows order p=3
+
+```
+
+(c)
+```{r,echo=TRUE}
+set.seed(123456)
+sim_ts=arima.sim(n=500,list(ar = c(0.8, -1/3,0.6/sqrt(3))),sd=sqrt(0.8))
+plot(sim_ts)
+
+```
+(d)
+```{r,echo=TRUE}
+# comment on the behaviour of the sample
+# acf, and explain whether it appears as you would expect given the model.
+
+acf(sim_ts)
+acf(sim_ts,plot=FALSE)
+#the acf values decay slow.lag=0,acf=1, from lag=1 to lag=14,the acf values are significant and lay outside the confidence band. after lag h=15(including h=15),the acf values lay inside the confidence band, indicating the long term dependence. which is as expected.
+
+```
+(e)
+```{r,echo=TRUE}
+# comment on the behaviour of the sample pacf, and explain whether it appears as you would expect
+# given the model.
+pacf(sim_ts)
+pacf(sim_ts,plot=FALSE)
+# pacf showa 3 significant lines,that is,cut off at lag 3. as expected
+
+```
+(f)
+```{r,echo=TRUE}
+fit<-arima(sim_ts,order = c(3,0,0),include.mean = T)
+fit
+.1196/.2025 > 1.96
+#so we do not include mean
+fit<-arima(sim_ts,order = c(3,0,0),include.mean = F)
+fit
+
+```
+
+(g)
+```{r,echo=TRUE}
+fit=arima(sim_ts,order = c(3,0,0),include.mean = F,method="CSS")
+fit
+
+```
+

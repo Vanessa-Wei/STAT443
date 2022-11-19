@@ -1,0 +1,97 @@
+---
+title: "Lab4_443"
+author: 'Lai Wei (#31739014)'
+date: "03 Feb, 2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+
+(a)
+```{r,echo=TRUE}
+# describe in words what it means for a time series to be stationary.
+# the expectation of stationary time series is 0, mean of stationary time series remain unchanged in a long term.
+# thus, time series with trend and seasonality are not stationary.
+
+```
+
+(b)
+```{r,echo=TRUE}
+dat<-read.csv("lab4data.csv")
+dat_ts<-ts(dat$x)
+plot(dat_ts)
+
+#plot and comment on whether the series appears to satisfy the requirements of stationarity.
+# this time series has an obvious upward trend, indicating non-stationary. 
+```
+
+(c)
+```{r,echo=TRUE}
+y<-diff(dat_ts,lag=1,differences=1)
+plot(y)
+# Comment on the resulting plot and the acf of {yt}.
+# {yt} time series doesn't have trend ,but it has seasonality with 10(unit) period.
+```
+
+(d)
+```{r,echo=TRUE}
+# Plot the acf of ∇syt.
+# Does your ∇sytresemble white noise?
+
+ys<-diff(y,lag=8,differences = 1)
+plot(ys)
+# white noise?
+# yes,time series has white noise,since no significant autocorrelation.
+
+```
+
+(e)
+```{r,echo=TRUE}
+
+# Suggest which type of model from the SARIMA family you would use for the original data.
+
+#SARIMA(p,d,q) X (P,D,Q)_s
+
+#p,q,P,Q are all 0,since the new time seires it's white noise, we don't need MA(p) and AR(q) 
+
+#p:0 
+#d: take difference with lag=1 once,remove the trend,thus d=1
+#q:0
+
+#P:0
+#D: take difference with lag=8(seasonality) once,remove the seasonal effect,thus D=1
+#Q:0
+
+#s:the seasonality,take lag=8 and remove seasonal effect,thus s=8
+
+```
+
+### Question 2
+
+(a)
+
+$Y_t = X_t -X_{t-1}$
+$W_t=Y_t-Y_{t-s}$
+$W_t=(X_t-X_{t-1})-(X_{t-s}-X_{t-s-1})=X_t-X_{t-1}-X_{t-s}+X_{t-s-1}$
+
+(b)
+$Y_t=X_t-BX_t=(1-B)X_t$
+$Y_t = X_t - X_{t-1} = (1 - B) * X_t$
+
+(c)
+
+$B^s X_t=Y_{t-s}$
+$W_t = Y_t -B^sY_t =(1-b^s)Y_t=(1-B^s)(1-B)X_t=(1 - B - B^8 - B^9) * X_t$
+
+
+
+

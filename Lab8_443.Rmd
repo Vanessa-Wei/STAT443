@@ -1,0 +1,67 @@
+---
+title: 'STAT 443: Lab8'
+author: 'Lai Wei (#31739014)'
+date: "14 March, 2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+1.
+```{r,echo=TRUE}
+dat<-read.table("souvenir.txt",header = FALSE)
+dat_ts<-ts(dat,start=c(1987,1),end=c(1993,12),frequency=12)
+plot(dat_ts,xlab="Year",ylab="Monthly Sales($)")
+acf(dat_ts)
+#comment:
+#1.the time sereis has seasonality of period=12, but no trend.
+#2.the acf cut off at lag 1.
+#3.It is multiplicative since the amplitude increases as time increases
+```
+2.
+```{r,echo=TRUE}
+#January 1987 to December 1992
+ts<-window(dat_ts,start=c(1987,1),end=c(1992,12))
+#fit a prediction model based on the data
+fit<-HoltWinters(ts,seasonal = "multiplicative")
+#provide the parameter values
+#report alpha, beta and gamma
+alpha<-fit$alpha
+beta<-fit$beta
+gamma<-fit$gamma
+alpha
+beta
+gamma
+
+plot(fit)#plot
+```
+3.
+```{r,echo=TRUE}
+#predict monthly sales from January 1993 to December 1993 via the predict function
+pre<-predict(fit,12,level=0.95,prediction.interval = T)
+plot(pre,plot.type = "single",col = c(1,2,2),lty=c(1,2,2))
+#provide the forecast values for the first three months of 1993
+pre[1:3,]
+```
+4.
+```{r,echo=TRUE}
+#do the observed values for the first three months of 1993 fall inside their corresponding 95% prediction intervals?
+
+obs<-window(dat_ts,start=c(1993,1),end=c(1993,12))
+obs[1:3,]
+# only the observed value in first month of 1993 fall inside the corresonding 95% prediction interval.
+```
+5.
+```{r,echo=TRUE}
+#if you were to perform a transformation on the time series, what would you consider and why?
+
+# take log, we will obtain log(x_t)=log(m_t*s_t*z_t)=log(m_t)+log(s_t)+log(z_t), and than fit an addictive model.
+```
+

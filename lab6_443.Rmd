@@ -1,0 +1,53 @@
+---
+title: 'STAT 443: Lab6'
+author: 'Lai Wei (#31739014)'
+date: "1 March, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+(1)
+```{r,echo=TRUE}
+dat<-read.csv("TempPG.csv")
+ts<-ts(dat$Annual,start=1919,end=2008)
+plot(ts,xlab="Year",ylab="Temperatures",main="Annual Minimum Temperatures")
+acf(ts)
+pacf(ts)
+#acf tails off,slowly decay,without obvious pattern
+#pacf cuts off at lag 1,indicate that p=1
+#we can fit an ARMA(1,0) model to the above data
+
+AR <- arima(ts,order = c(1,0,0))
+AR_fit <-ts-residuals(AR)
+plot(ts)
+points(AR_fit, type = "l", col = 2, lty = 2)
+```
+(2)
+```{r,echo=TRUE}
+ts_arma<-arima(ts,order=c(1,0,0))
+ts_arma
+# fitted model:
+```
+
+$$ X_t + 1.9591 =0.5843*(X_{t-1}+1.9591) +Z_t$$
+(3)
+```{r,echo=TRUE}
+confint(ts_arma,level = 0.95)
+# 95% confidence interval is (0.4150038,0.753554)
+```
+
+(4)
+```{r,echo=TRUE}
+tsdiag(ts_arma)
+# acf at lag=0 is 1.except this one, all acf lie inside the confidence band, that is, all acf are small, means residuals act like white noise. we can conclude that model ARMA(1,0) fits well.
+# P-values are basically greater than 0.05, we can conclude that p values are large, which also support our model
+```
+

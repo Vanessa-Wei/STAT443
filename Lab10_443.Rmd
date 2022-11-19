@@ -1,0 +1,105 @@
+---
+title: 'STAT 443: Lab10'
+author: 'Lai Wei (#31739014)'
+date: "28 March, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#if you do not have the package, type install.packages("name_of_the_package")
+library(knitr)
+library(tseries)
+```
+
+### Question 1
+(a)
+```{r,echo=TRUE}
+#spectural density function
+plot(c(0,pi),c(4/pi,4/pi),type="l",xlab="w",ylab="I(w_p)")
+```
+(b)
+```{r,echo=TRUE}
+z<-arima.sim(n=100,list(order=c(0,0,0)),sd=sqrt(4))
+spec.pgram(z,log="no")
+#comment:
+#the periodogram seems to be centered around true value 4. But the plot here has a lot of variations.
+```
+(c)
+```{r,echo=TRUE}
+z2<-arima.sim(n=1000,list(order=c(0,0,0)),sd=sqrt(4))
+spec.pgram(z2,log="no")
+#comment:
+#the periodogram seems to be centered around true value 4.and this plot still has a lot of variantion.the larger sample size seem not helping in reducing the variance. the plot with larger sample size looks like more density
+```
+
+(d)
+```{r,echo=TRUE}
+# repeat (b) and (c) several times,how the periodogram from R behaves as an estimator of the spectral density function based on what you have observed.
+
+# Periodogram is an asmptotically unbiased estimator for spectrum, but it is not consistent.
+```
+
+### Question 2
+(a)
+```{r,echo=TRUE}
+beta<- -0.9
+fw<-function(w){
+  return((1+beta^2)*4*1/pi*(1+2*beta*cos(w)/(1+beta^2)))
+}
+
+w_value<-seq(0,pi,length.out = 100)
+plot(w_value,fw(w_value),type="l")
+
+```
+(b)
+```{r,echo=TRUE}
+ma<-arima.sim(n=100,list(ma=c(-0.9)),sd=2)
+spec.pgram(ma,log="no")
+
+#the periodogram captures the overall shape of specturm,that is,small on low frequency, large on high frequency.
+```
+(c)
+```{r,echo=TRUE}
+ma2<-arima.sim(n=100,list(ma=c(-0.9)),sd=2)
+spec.pgram(ma2,log="no")
+#the periodogram captures the overall shape of spectrum,that is,small on low frequency, large on high frequency. with larger sample szie, the variation goes smaller.
+```
+(d)
+repeat (b) and (c) several times,how the periodogram from R behaves as an estimator of the spectral density function based on what you have observed.
+
+Periodogram is an asmptotically unbiased estimator for spectrum, but it is not consistent.
+
+
+### Question 3
+(a)
+```{r,echo=TRUE}
+#plot the sepctral for X_t
+fw<-function(w){
+  return(4/pi/(1-1.6*cos(w)+0.8^2))
+}
+
+w_value<-seq(0,pi,length.out = 100)
+plot(w_value,fw(w_value),type="l")
+
+```
+(b)
+```{r,echo=TRUE}
+ar<-arima.sim(n=100,list(ar=c(0.8)),sd=2)
+spec.pgram(ar,log="no")
+#the periodogram captures the overall shape of frequency waves: large on low frequency, small on high frequency.
+```
+
+(c)
+```{r,echo=TRUE}
+ar2<-arima.sim(n=1000,list(ar=c(0.8)),sd=2)
+spec.pgram(ar2,log="no")
+#the periodogram captures the overall shape of frequency waves: large on low frequency, small on high frequency, with larger sample size, the variation goes smaller.
+```
+(d)
+repeat (b) and (c) several times,how the periodogram from R behaves as an estimator of the spectral density function based on what you have observed.
+
+Periodogram is an asmptotically unbiased estimator for spectrum, but it is not consistent.
+
